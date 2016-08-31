@@ -1,0 +1,198 @@
+---
+title: "Exam 2016"
+author: "Ninette Lotter"
+date: "31 August 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+**Alternative hypothesis:** Body temperature and heart rate is different between men and women
+
+**Null hypothesis:** There is no difference in body temperature or heart rate between men and women.
+
+```{r question_1, warning=FALSE}
+# Load packages
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+# Import data
+data1 <- readr::read_csv('https://dl.dropboxusercontent.com/u/11805474/painblogr/biostats/exam-data-2016/question1.csv')
+# Summary statistics
+summary(data1)
+head(data1)
+# TIdy data
+gathered1 <- gather(data1, key = Sex, value = Heart_rate, male:female, na.rm = T)
+gathered1
+summary(gathered1)
+# Perform statistical test
+t.test(body_temperature ~ Sex, data = gathered1, paired = T)
+t.test(Heart_rate ~ Sex, data = gathered1, paired = T)
+```
+
+**Type of data:** Paired continuous data.
+
+**Test Assumptions:**
+
+* Data are normally distributed.
+* Equal variance across groups.
+* The errors are independent.
+* Matching is effective.
+
+**Statistical test:** t-test
+
+**Test statistic:**
+
+_Heart rate ~ Sex_
+t = 0.577
+p =0.566
+95% CI = -1.93 to 3.501
+
+_Body temperature ~ Sex_
+t = 11.536
+p < 0.001
+
+**Conclusion:** There is no significant difference in heart rate (t = 0.577, p = 0.566) between men and women. Body temperature is significantly different (t = 11.536, p < 0.001) between men and women (95% CI does not include zero, therefore we can accept the null hypothesis regarding body temperature).
+
+## Question 2
+
+**Alternative hypothesis:** Handedness is associated with ataxic walking in intoxicated individuals.
+
+**Null hypothesis:** There is no association between handedness and ataxic walking in intoxicated individuals.
+
+```{r question_2, warning=FALSE}
+# load packages
+library(tidyr)
+library(dplyr)
+# Import data
+data2 <- readr::read_csv('https://dl.dropboxusercontent.com/u/11805474/painblogr/biostats/exam-data-2016/question2.csv')
+# Summary statistics
+summary(data2)
+head(data2)
+# Select a subset of columns
+select <- select(data2, handedness, final_position)
+# Cross tabulate selected columns
+tab <- xtabs(~ handedness + final_position, data = select)
+tab
+# Plot data
+barplot(tab, beside = TRUE, legend.text = TRUE)
+# Statistical test
+mcnemar.test(tab)
+```
+
+**Type of data:** Paired ordinal data.
+
+**Test Assumptions:**
+
+* The two groups are mutually independent.
+* Each x and y can be assigned to two possible categories.
+* Random sampling.
+
+
+**Statistical test:** McNemar Test
+
+**Test statistic:**
+
+Chi-squared = 1.0159
+Degrees of freedom = 1
+Sample size = 151
+p = 0.3135
+
+**Conclusion:** There is no significant association (Chi-squared = 1.0159, p = 0.3135) between handedness and ataxic walking in intoxicated individuals.
+
+## Question 3
+
+**Alternative hypothesis:** Running time is associated with calories consumed during a run.
+
+**Null hypothesis:** There is no association between running time and calorie consumption.
+
+```{r question_3, warning=FALSE}
+# Load packages
+library(readr)
+library(tidyr)
+# Import dataset
+data3 <- readr::read_csv('https://dl.dropboxusercontent.com/u/11805474/painblogr/biostats/exam-data-2016/question3.csv')
+# Summary statistics
+summary(data3)
+head(data3)
+# Exploratory plot (modified to publishable format)
+plot(data3$time, data3$calories, xlab = 'Running time (s)', ylab = 'Calories consumed (cal)', main = 'Correlation between running time and calories consumed during run.')
+# Abline of linear regression
+abline(lm(calories ~ time, data = data3))
+
+# Test for correlation 
+cor.test(data3$time, data3$calories, method = 'pearson')
+# Linear regression analysis
+model <- lm(calories ~ time, data = data3)
+# Print summary of linear regression statistics
+summary(model)
+# Diagnostic plots to confirm linear regression
+plot(x = model$fitted, y = model$residuals)
+abline(h = 0)
+qqnorm(model$residuals)
+qqline(model$residuals)
+```
+
+**Type of data:** Unpaired continuous data.
+
+**Assumptions for Pearson's correlation:** 
+
+* There is a linear relationship between the variables.
+* There are no outliers
+* Both variables are approximately normally distributed.
+
+**Assumptions for linear regression:**
+
+* There is a linear trend between x and y.
+* The observations in the sample are independent.
+* x is measured without error.
+* The residuals are normally distributed.
+* The residuals have the same variance for all fitted values of y (homoskedastic).
+
+**Statistical test:** Pearson's correlation and linear regression model.
+
+**Results:**
+
+_Correlation analysis_
+Pearson's t = -3.77
+Degrees of freedom = 17
+p = 0.0015
+95% Confidence Interval = -0.86 to -0.32
+
+_Linear regression_
+F-statistic = 14.22
+Degrees of freedom = 17
+p = 0.0015
+
+The graph fitted for homoskedacity shows no pattern, therefore the residuals have the same variance for all fitted values of y. 
+The quantile-quantile plot showed a Gaussian distribution of the residuals. 
+
+**Conclusion:** There is a significant inverse relationship (t = -3.77, F = 14.22, p = 0.0015) between running time and the calories consumed during a run.
+
+## Question 4
+
+```{r question_4, warning=FALSE, dev='pdf', fig.path='./figures/'}
+library(readr)
+library(tidyr)
+foo <- rnorm(10000, mean = 60, sd = 3) # final mark
+bar <- rnorm(10000, mean = 68, sd = 5) # project mark
+baz <- rep(seq(from = 1997, to = 2006), each = 1) # years
+
+year <- sample(baz, 150, replace = TRUE,
+               prob = c(0.05, 0.05, 0.08, 0.08, 
+                          0.1, 0.13, 0.14, 0.13, 0.12, 0.12))
+project_mark <- sample(bar, 150, replace = TRUE)
+final_mark <- sample(foo, 150, replace = TRUE)
+
+plot_data <- data_frame(year = year,
+                        project_mark = round(project_mark, 1),
+                        final_mark = round(final_mark, 1)) %>%
+    arrange(year)
+plot(plot_data$project_mark, plot_data$final_mark, xlab = 'Project mark (%)', ylab = 'Final mark (%)', main = 'Relationship between project mark and final mark.', ylim = c(50, 80), xlim = c(50, 80))
+# Axis scale was set from 50 to 80 because the distribution and trend of the marks is easier to see.
+```
+
